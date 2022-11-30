@@ -14,7 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Import data
 ```{r}
 
-raw <- read.csv("wisc.")
+raw <- read.csv("408_data_raw.csv")
 
 ```
 
