@@ -21,13 +21,16 @@ survey<- survey[-2,]
 
 survey_w_question <- survey
 survey <-survey[-1,]
-str(survey)
-#factorize variables
 
-survey[, c(2:4,6,7,9,10,14:35,38:45)] <- lapply(survey[, c(2:4,6,7,9,10,14:35,38:45)], as.factor)
+#factorize variables
+survey[, c(2:4,6,7,9,10,14:35,38)] <- lapply(survey[, c(2:4,6,7,9,10,14:35,38)], as.factor)
 
 #convert continuous variables to numeric
-survey[, c("Q15_1","Q23","Q24")] <- lapply(survey[, c("Q15_1","Q23","Q24")], as.numeric)
+survey[, c(8,36:37,39:45)] <- lapply(survey[, c(8,36:37,39:45)], as.numeric)
+
+#remove responses where they did not disclose their first gen status
+n_removed <- survey %>% filter(Q20.1=="") %>% nrow()
+survey <- survey %>% filter(!Q20.1=="")
 
 #-------------------
 # Part 1c: Subsets 
@@ -41,7 +44,8 @@ survey[, c("Q15_1","Q23","Q24")] <- lapply(survey[, c("Q15_1","Q23","Q24")], as.
 survey <- survey %>% mutate(group=ifelse(Q16=="A lot of Support"|
                                                                   Q16=="Little Support"|
                                                                   Q16=="Moderate Support"|
-                                                                  Q16=="None","Treatment", "Control"))
+                                                                  Q16=="None","Treatment", "Control")) %>% mutate(student_status=ifelse(Q20.1=="Yes","First-gen","Not first_gen"))
+survey$student_group <- as.factor(paste(survey$group, survey$student_status))
 
 # Create the treatment group (the group of first-gen students who were primed):
 # Those who said yes to q20.1
@@ -212,10 +216,40 @@ reg1<-lm(risk2~primed_first_gen,data=survey)
 #----------------------------
 
 
-#reverse scoring
+#Reverse scoring and score calculation
 
-str(survey)
-survey %>% group_by(Q20.1) %>% summarize(college_risk=mean(Q26_1))
+survey[ , reverse_cols] <- 5 - survey[ , reverse_cols]
+
+survey <- survey %>% mutate(sentiment_score = select(., Q26_1:Q26_7) %>% rowSums(na.rm = TRUE)) %>% mutate(sentiment_score=sentiment_score/7)
+
+#difference in the sentiment score for first generation status and group assignment
+survey %>% group_by(Q20.1, group) %>% summarize(mean_sentiment_score=mean(sentiment_score))
+
+#There is a statistically significant difference in sentiment score and first generation status
+t.test(survey$sentiment_score~survey$Q20.1)
+
+#There is no statistically significant effect of priming in sentiment score for first-gen students.
+t.test(survey$sentiment_score[survey$student_status=="First-gen"]~survey$group[survey$student_status=="First-gen"])
+
+#There is no statistically significant effect of priming in sentiment score for non first-gen students.
+t.test(survey$sentiment_score[survey$student_status=="Not first_gen"]~survey$group[survey$student_status=="Not first_gen"])
+
+aov1 <- aov(sentiment_score~student_group, data=survey)
+summary(aov1)
+
+#Fit a linear regression model
+
+lm1 <- lm(sentiment_score~student_status+group, data=survey)
+summary(lm1)
+
+
+boxplot(Q23~student_status,data=survey, main="Expected Earnings by First Generation Status",
+        xlab="First Generation Status", ylab="Expected Earnings after Graduation")
+
+boxplot(Q23~Q7,data=survey, main="Expected Earnings by Gender",
+        xlab="Gender", ylab="Expected Earnings after Graduation")
+
+
 #----------------------------
 # Part 5: Exploratory Analysis
 #----------------------------
