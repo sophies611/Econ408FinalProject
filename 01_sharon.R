@@ -11,9 +11,20 @@ library(haven) #to import data
 library(dplyr) #to filter 
 
 #------------------
-# 1b: Import Data 
+# 1b: Import Data & Clean
 #------------------
 survey<-read.csv("survey.csv",encoding="UTF-8")
+
+#Remove extraneous columns and rows
+survey <-  survey[ -c(1:15) ]
+survey<- survey[-2,]
+
+survey_w_question <- survey
+survey <-survey[-1,]
+
+#factorize variables
+
+survey$Q7 <- as.factor(survey$Q7)
 
 #-------------------
 # Part 1c: Subsets 
@@ -180,4 +191,19 @@ survey$risk2[survey$Q32=="Salary of $200,000 with 30% probability of being laid-
 
 
 reg1<-lm(risk2~primed_first_gen,data=survey)
+
+
+#----------------------------
+# Part 5: Questionnaire Data
+#----------------------------
+
+
+#reverse scoring
+
+str(survey)
+survey %>% group_by(Q20.1) %>% summarize(college_risk=mean(Q26_1))
+#----------------------------
+# Part 5: Exploratory Analysis
+#----------------------------
+
 
