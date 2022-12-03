@@ -32,6 +32,17 @@ survey$Q8 <- as.factor(survey$Q8)
 #-------------------
 # Part 1c: Subsets 
 #-------------------
+
+
+
+
+# Make a variable name for treatment/control
+
+survey <- survey %>% mutate(group=ifelse(Q16=="A lot of Support"|
+                                                                  Q16=="Little Support"|
+                                                                  Q16=="Moderate Support"|
+                                                                  Q16=="None","Treatment", "Control"))
+
 # Create the treatment group (the group of first-gen students who were primed):
 # Those who said yes to q20.1
 # AND those who answered q16
