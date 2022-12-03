@@ -16,15 +16,18 @@ library(dplyr) #to filter
 survey<-read.csv("survey.csv",encoding="UTF-8")
 
 #Remove extraneous columns and rows
-survey <-  survey[ -c(1:15) ]
+survey <-  survey[ -c(1:17) ]
 survey<- survey[-2,]
 
 survey_w_question <- survey
 survey <-survey[-1,]
-
+str(survey)
 #factorize variables
 
 survey$Q7 <- as.factor(survey$Q7)
+survey$Q8 <- as.factor(survey$Q8)
+
+
 
 #-------------------
 # Part 1c: Subsets 
