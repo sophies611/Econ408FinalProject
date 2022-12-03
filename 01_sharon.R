@@ -24,10 +24,10 @@ survey <-survey[-1,]
 str(survey)
 #factorize variables
 
-survey$Q7 <- as.factor(survey$Q7)
-survey$Q8 <- as.factor(survey$Q8)
+survey[, c(2:4,6,7,9,10,14:35,38:45)] <- lapply(survey[, c(2:4,6,7,9,10,14:35,38:45)], as.factor)
 
-
+#convert continuous variables to numeric
+survey[, c("Q15_1","Q23","Q24")] <- lapply(survey[, c("Q15_1","Q23","Q24")], as.numeric)
 
 #-------------------
 # Part 1c: Subsets 
