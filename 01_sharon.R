@@ -206,7 +206,9 @@ risk_1 <- risk_1 %>%
                                                                  ifelse(Q28.1_8!=Q28.1_9,8,9)))))))))
 
 survey$risk_game_1_cutoff <-risk_1$cutoff
-#high score means more risk averse; first gen more risk averse, albeit not statistically significant
+survey$risk_game_1_cutoff <-10-survey$risk_game_1_cutoff
+
+#higher score means more risky
 
 survey %>% group_by(student_status) %>% summarize(mean_risk_game_1_cutoff=mean(risk_game_1_cutoff))
 t.test(risk_game_1_cutoff~student_status, data=survey)
@@ -214,7 +216,11 @@ t.test(risk_game_1_cutoff~student_status, data=survey)
 # Part 3b: Risk Pref Game #2
 #----------------------------
 # Create variable for risk:
-# # # I NEED A NEW DATA SET WITH THE NUMBERS ONLY CUZ I CAN'T ENTER THE FRACTIONS
+
+# Convert character vector to factor
+survey$Q29_numeric <- as.numeric(factor(survey$Q29, levels = as.character(unique(column))))
+
+#higher score means more risky
 
 
 
@@ -222,22 +228,41 @@ t.test(risk_game_1_cutoff~student_status, data=survey)
 # Part 3c: Risk Pref Game #3
 #----------------------------
 # Create another variable for risk: 
-survey$risk2<-0
-survey$risk2[survey$Q32=="Salary of $40,000 with 0% probability of being laid-off"]<-1
-survey$risk2[survey$Q32=="Salary of $75,000 with 10% probability of being laid-off"]<-2
-survey$risk2[survey$Q32=="Salary of $100,000 with 20% probability of being laid-off"]<-3
-survey$risk2[survey$Q32=="Salary of $200,000 with 30% probability of being laid-off"]<-4
 
-# Create variable for primed first gen: 
-survey$r<-0
-survey$risk2[survey$Q32=="Salary of $40,000 with 0% probability of being laid-off"]<-1
-survey$risk2[survey$Q32=="Salary of $75,000 with 10% probability of being laid-off"]<-2
-survey$risk2[survey$Q32=="Salary of $100,000 with 20% probability of being laid-off"]<-3
-survey$risk2[survey$Q32=="Salary of $200,000 with 30% probability of being laid-off"]<-4
+survey$risk3[survey$Q32=="Salary of $40,000 with 0% probability of being laid-off"]<-1
+survey$risk3[survey$Q32=="Salary of $75,000 with 10% probability of being laid-off"]<-2
+survey$risk3[survey$Q32=="Salary of $100,000 with 20% probability of being laid-off"]<-3
+survey$risk3[survey$Q32=="Salary of $200,000 with 30% probability of being laid-off"]<-4
 
 
-reg1<-lm(risk2~primed_first_gen,data=survey)
+#higher score means more risky
 
+
+
+#----------------------------
+# Part 3d: Add up risk preference scores
+#----------------------------
+
+survey$risk_score <- (survey$risk3+survey$risk_game_1_cutoff+survey$Q29_numeric)
+
+#a higher score correlates to being more risky
+
+
+#----------------------------
+# Part 4: Regression Analysis
+#----------------------------
+
+risk_mod <- lm(risk_score~group+student_status+group*student_status, data=survey)
+summary(risk_mod)
+t.test(risk_score~student_status, data=survey) #first gen students statistically significantly more risk averse
+boxplot(risk_score~student_status*group, data=survey, col="light blue")
+
+
+#There is a close statistically significant effect of priming in sentiment score for first-gen students.
+t.test(survey$risk_score[survey$student_status=="First-gen"]~survey$group[survey$student_status=="First-gen"])
+
+#There is no statistically significant effect of priming in sentiment score for non first-gen students.
+t.test(survey$risk_score[survey$student_status=="Not first_gen"]~survey$group[survey$student_status=="Not first_gen"])
 
 #----------------------------
 # Part 5: Questionnaire Data
@@ -245,7 +270,7 @@ reg1<-lm(risk2~primed_first_gen,data=survey)
 
 
 #Reverse scoring and score calculation
-
+reverse_cols <- c("Q26_1", "Q26_3", "Q26_7")
 survey[ , reverse_cols] <- 5 - survey[ , reverse_cols]
 
 survey <- survey %>% mutate(sentiment_score = select(., Q26_1:Q26_7) %>% rowSums(na.rm = TRUE)) %>% mutate(sentiment_score=sentiment_score/7)
@@ -253,7 +278,7 @@ survey <- survey %>% mutate(sentiment_score = select(., Q26_1:Q26_7) %>% rowSums
 #difference in the sentiment score for first generation status and group assignment
 survey %>% group_by(Q20.1, group) %>% summarize(mean_sentiment_score=mean(sentiment_score))
 
-#There is a statistically significant difference in sentiment score and first generation status
+#There is no statistically significant difference in sentiment score and first generation status
 t.test(survey$sentiment_score~survey$Q20.1)
 
 #There is no statistically significant effect of priming in sentiment score for first-gen students.
@@ -265,9 +290,11 @@ t.test(survey$sentiment_score[survey$student_status=="Not first_gen"]~survey$gro
 aov1 <- aov(sentiment_score~student_group, data=survey)
 summary(aov1)
 
+boxplot(sentiment_score~student_status*group, data=survey, col="light blue")
+
 #Fit a linear regression model
 
-lm1 <- lm(sentiment_score~student_status+group, data=survey)
+lm1 <- lm(sentiment_score~student_status+group+student_status*group, data=survey)
 summary(lm1)
 
 
@@ -279,7 +306,13 @@ boxplot(Q23~Q7,data=survey, main="Expected Earnings by Gender",
 
 
 #----------------------------
-# Part 5: Exploratory Analysis
+# Part 6: Exploratory Analysis
 #----------------------------
 
+#within the treatment group, how are risk and time preferences dependent on parents education pedigrees?
+library(ggplot2)
+survey %>% filter(group=="Treatment") %>% ggplot(aes(x=Q13, y=risk_score, fill=student_status)) + geom_boxplot()
+survey %>% filter(group=="Treatment") %>% ggplot(aes(x=Q13, y=sentiment_score, fill=student_status)) + geom_boxplot()
 
+parent_edu_mod <- lm(sentiment_score~Q13*student_status+Q13+student_status, data=survey)
+summary(parent_edu_mod)
