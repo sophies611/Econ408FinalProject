@@ -30,13 +30,16 @@ survey[, c(8,36:37,39:45)] <- lapply(survey[, c(8,36:37,39:45)], as.numeric)
 
 #remove responses where they did not disclose their first gen status
 n_removed <- survey %>% filter(Q20.1=="") %>% nrow()
-survey <- survey %>% filter(!Q20.1=="")
+survey <- survey %>% filter(!Q20.1=="", !Q3=="")
 
+table(survey$student_status)
+table(survey$student_group)
 #-------------------
 # Part 1c: Subsets 
 #-------------------
 
-
+prop.table(table(survey$Q7,survey$Q20.1))
+table(survey$Q7, survey$Q8)
 
 
 # Make a variable name for treatment/control
@@ -181,7 +184,32 @@ prop.table(table(primed_non_first_gen$Q28.1_1)) # 91% of primed non-first-gen ar
 prop.table(table(control_non_first_gen$Q28.1_1)) # 95% of control non-first-gen are risk averse, 1% risky
 # is this a sig diff? 
 
+risk_1 <- survey[ 22:30]
 
+for (j in nrow(risk_1)){
+  for(i in 2:ncol(risk_1)) { 
+    print(risk_1[j,i])
+    if(risk_1[ j, i] != risk_1[j , i-1]){
+      survey$risk_game_1<-i
+  }
+}
+  }
+
+risk_1 <- risk_1 %>% 
+  mutate(cutoff=ifelse(Q28.1_1!=Q28.1_2, 1, 
+                       ifelse(Q28.1_2!=Q28.1_3,2, 
+                              ifelse(Q28.1_3!=Q28.1_4,3,
+                                     ifelse(Q28.1_4!=Q28.1_5,4,
+                                            ifelse(Q28.1_5!=Q28.1_6,5,
+                                                   ifelse(Q28.1_6!=Q28.1_7,6,
+                                                          ifelse(Q28.1_7!=Q28.1_8,7,
+                                                                 ifelse(Q28.1_8!=Q28.1_9,8,9)))))))))
+
+survey$risk_game_1_cutoff <-risk_1$cutoff
+#high score means more risk averse; first gen more risk averse, albeit not statistically significant
+
+survey %>% group_by(student_status) %>% summarize(mean_risk_game_1_cutoff=mean(risk_game_1_cutoff))
+t.test(risk_game_1_cutoff~student_status, data=survey)
 #----------------------------
 # Part 3b: Risk Pref Game #2
 #----------------------------
