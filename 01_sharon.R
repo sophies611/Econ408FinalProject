@@ -309,6 +309,8 @@ boxplot(Q23~Q7,data=survey, main="Expected Earnings by Gender",
 # Part 6: Exploratory Analysis
 #----------------------------
 
+prop.table(table(survey$student_status, survey$Q25))
+
 #within the treatment group, how are risk and time preferences dependent on parents education pedigrees?
 library(ggplot2)
 survey %>% filter(group=="Treatment") %>% ggplot(aes(x=Q13, y=risk_score, fill=student_status)) + geom_boxplot()
@@ -316,5 +318,6 @@ survey %>% filter(group=="Treatment") %>% ggplot(aes(x=Q13, y=sentiment_score, f
 
 parent_edu_mod <- lm(sentiment_score~Q13*student_status+Q13+student_status, data=survey)
 summary(parent_edu_mod)
+
 
 
