@@ -9,6 +9,8 @@
 setwd("~/Downloads")
 library(haven) #to import data 
 library(dplyr) #to filter 
+library(ggplot2)
+library(stargazer)
 
 #------------------
 # 1b: Import Data & Clean
@@ -34,6 +36,7 @@ survey <- survey %>% filter(!Q20.1=="", !Q3=="")
 
 table(survey$student_status)
 table(survey$student_group)
+
 #-------------------
 # Part 1c: Subsets 
 #-------------------
@@ -86,8 +89,24 @@ control_non_first_gen<-filter(survey,Q20.1=="No" & (Q19=="Duderstadt"|Q19=="Hatc
 # Check: total obs of groups above approx add up to total obs for following:
 non_first_gen<-filter(survey,Q20.1=="No")
 
+#-------------------
+# 1d: Summary Stats
+#-------------------
+
+summary(survey$Q7) #134 female, 83 male, 4 other 
+summary(first_gen$Q7) #26 female, 17 male, 1 other 
+summary(non_first_gen$Q7) #108 female, 66 male, 3 other 
+
+summary(survey$Q8) #96 Asian, 3 Black, 7 Other, 107 White, 8 White/Asian
+summary(first_gen$Q8) #19 Asian, 1 Black, 4 Other, 20 White 
+summary(non_first_gen$Q8) #77 Asian, 2 Black, 3 Other, 87 White, 8 White/Asian
+
+summary(survey$Q9) #17 fresh, 34 soph, 77 jr, 90 snr, 1 fifth yr 
+summary(first_gen$Q9) #7 fresh, 8 soph, 10 jr, 18 snr, 1 fifth yr 
+summary(non_first_gen$Q9) #10 fresh, 26 soph, 67 jr, 72 snr, 2 fifth yr
+
 #-----------------
-# Patience Vrs 1 
+# Patience Game 
 #-----------------
 
 # what is the proportion of primed first gen kids who choose a over b (impatient)
@@ -119,57 +138,48 @@ prop.table(table(control_first_gen$Q21.1_6)) # 10% impatient, 90% patient
 prop.table(table(primed_first_gen$Q21.1_7)) # 4% impatient, 96% patient
 prop.table(table(control_first_gen$Q21.1_7)) #10% impatient, 90% patient
                                             # sig diff
-# # # oh no there are NULL answers here 
+
+primed_first_gen<-filter(primed_first_gen,Q21.1_8=="A (1 month)"|Q21.1_8=="B (7 months)")
 prop.table(table(primed_first_gen$Q21.1_8)) # 4% impatient, 91% patient
 prop.table(table(control_first_gen$Q21.1_8)) # 5% impatient, 95% patient 
-                                            # no sig diff but need to fix ! ! !
 
 
-
+                                
 prop.table(table(primed_non_first_gen$Q21.1_1)) # 53% of primed non-first-gen are impatient, 41% patient 
 prop.table(table(control_non_first_gen$Q21.1_1)) # 68% of control non-first-gen are impatient, 30% patient 
                                                 # sig diff
 
-# # # oh no there are NULL answers here
+primed_non_first_gen<-filter(primed_non_first_gen,Q21.1_2=="A (1 month)"|Q21.1_2=="B (7 months)")
+control_non_first_gen<-filter(control_non_first_gen,Q21.1_2=="A (1 month)"|Q21.1_2=="B (7 months)")
 prop.table(table(primed_non_first_gen$Q21.1_2)) # 42% impatient, 52% patient
 prop.table(table(control_non_first_gen$Q21.1_2)) # 45% impatient, 53% patient
                                                 # sig diff 
-# # # also NULL here 
+
+primed_non_first_gen<-filter(primed_non_first_gen,Q21.1_3=="A (1 month)"|Q21.1_3=="B (7 months)")
+control_non_first_gen<-filter(control_non_first_gen,Q21.1_3=="A (1 month)"|Q21.1_3=="B (7 months)")
 prop.table(table(primed_non_first_gen$Q21.1_3)) # 26% impatient, 67% patient
 prop.table(table(control_non_first_gen$Q21.1_3)) # 31% impatient, 68% patient 
                                                 # sig diff
-# # # also NULL here
+
 prop.table(table(primed_non_first_gen$Q21.1_4)) # 17% impatient, 77% patient
 prop.table(table(control_non_first_gen$Q21.1_4)) # 20% impatient, 80% patient 
                                                 # sig diff
 
-# # # also NULL here
 prop.table(table(primed_non_first_gen$Q21.1_5)) # 7% impatient, 88% patient 
 prop.table(table(control_non_first_gen$Q21.1_5)) # 11% impatient, 86% patient 
                                                 # sig diff 
-# # # also NULL here 
+
 prop.table(table(primed_non_first_gen$Q21.1_6)) # 6% impatient, 89% patient
 prop.table(table(control_non_first_gen$Q21.1_6)) # 5% impatient, 93% patient
                                                 # no sig diff
-# # # also NULL here 
+
 prop.table(table(primed_non_first_gen$Q21.1_7))  # 5% impatient, 90% patient
 prop.table(table(control_non_first_gen$Q21.1_7)) # 5% impatient, 93% patient
                                                 # no sig diff 
-# # # also NULL in the second one
+primed_non_first_gen<-filter(primed_non_first_gen,Q21.1_8=="A (1 month)"|Q21.1_8=="B (7 months)")
 prop.table(table(primed_non_first_gen$Q21.1_8)) # 3% impatient, 97% patient
 prop.table(table(control_non_first_gen$Q21.1_8)) # 2% impatient, 95% patient
                                                 # no sig diff 
-
-#-----------------
-# Patience Vrs 2 
-#-----------------
-
-
-
-
-
-
-
 
 
 
@@ -212,6 +222,7 @@ survey$risk_game_1_cutoff <-10-survey$risk_game_1_cutoff
 
 survey %>% group_by(student_status) %>% summarize(mean_risk_game_1_cutoff=mean(risk_game_1_cutoff))
 t.test(risk_game_1_cutoff~student_status, data=survey)
+
 #----------------------------
 # Part 3b: Risk Pref Game #2
 #----------------------------
@@ -224,18 +235,25 @@ survey$Q29_numeric <- as.numeric(factor(survey$Q29, levels = as.character(unique
 
 
 
-#----------------------------
-# Part 3c: Risk Pref Game #3
-#----------------------------
-# Create another variable for risk: 
+#--------------------
+# Risk Pref Game #3
+#--------------------
 
-survey$risk3[survey$Q32=="Salary of $40,000 with 0% probability of being laid-off"]<-1
-survey$risk3[survey$Q32=="Salary of $75,000 with 10% probability of being laid-off"]<-2
-survey$risk3[survey$Q32=="Salary of $100,000 with 20% probability of being laid-off"]<-3
-survey$risk3[survey$Q32=="Salary of $200,000 with 30% probability of being laid-off"]<-4
+# Create risk variable (1 being least, 4 being highest): 
+survey$riskgame3<-0
+survey$riskgame3[survey$Q32=="Salary of $40,000 with 0% probability of being laid-off"]<-1
+survey$riskgame3[survey$Q32=="Salary of $75,000 with 10% probability of being laid-off"]<-2
+survey$riskgame3[survey$Q32=="Salary of $100,000 with 20% probability of being laid-off"]<-3
+survey$riskgame3[survey$Q32=="Salary of $200,000 with 30% probability of being laid-off"]<-4
 
+# Checks:
+table(survey$Q32)
+table(survey$riskgame3)
 
-#higher score means more risky
+# Regress group, student status, and interaction term on risk: 
+reg<-lm(riskgame3~group+student_status+(group*student_status),data=survey)
+summary(reg)
+stargazer(reg)
 
 
 
