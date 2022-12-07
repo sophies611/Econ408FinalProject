@@ -316,3 +316,5 @@ survey %>% filter(group=="Treatment") %>% ggplot(aes(x=Q13, y=sentiment_score, f
 
 parent_edu_mod <- lm(sentiment_score~Q13*student_status+Q13+student_status, data=survey)
 summary(parent_edu_mod)
+
+
