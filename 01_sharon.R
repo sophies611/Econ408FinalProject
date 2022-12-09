@@ -183,16 +183,9 @@ prop.table(table(control_non_first_gen$Q21.1_8)) # 2% impatient, 95% patient
 
 
 
-#----------------------------
-# Part 3a: Risk Pref Game #1
-#----------------------------
-prop.table(table(primed_first_gen$Q28.1_1)) # 83% of primed first-gen are risk averse, 13% risky
-prop.table(table(control_first_gen$Q28.1_1)) # 85% of control first-gen are risk averse, 5% risky  
-                                            # no sig diff b/w primed and control first-gen
-
-prop.table(table(primed_non_first_gen$Q28.1_1)) # 91% of primed non-first-gen are risk averse, 6% risky 
-prop.table(table(control_non_first_gen$Q28.1_1)) # 95% of control non-first-gen are risk averse, 1% risky
-# is this a sig diff? 
+#--------------------
+# Risk Pref Game #1
+#--------------------
 
 risk_1 <- survey[ 22:30]
 
