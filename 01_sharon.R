@@ -6,7 +6,7 @@
 #--------------------
 # 1a: Set Directory 
 #--------------------
-setwd("~/Downloads")
+#setwd("~/Downloads")
 library(haven) #to import data 
 library(dplyr) #to filter 
 library(ggplot2)
@@ -196,14 +196,6 @@ prop.table(table(control_non_first_gen$Q28.1_1)) # 95% of control non-first-gen 
 
 risk_1 <- survey[ 22:30]
 
-for (j in nrow(risk_1)){
-  for(i in 2:ncol(risk_1)) { 
-    print(risk_1[j,i])
-    if(risk_1[ j, i] != risk_1[j , i-1]){
-      survey$risk_game_1<-i
-  }
-}
-  }
 
 risk_1 <- risk_1 %>% 
   mutate(cutoff=ifelse(Q28.1_1!=Q28.1_2, 1, 
@@ -261,7 +253,7 @@ stargazer(reg)
 # Part 3d: Add up risk preference scores
 #----------------------------
 
-survey$risk_score <- (survey$risk3+survey$risk_game_1_cutoff+survey$Q29_numeric)
+survey$risk_score <- (survey$riskgame3+survey$risk_game_1_cutoff+survey$Q29_numeric)
 
 #a higher score correlates to being more risky
 
@@ -272,6 +264,7 @@ survey$risk_score <- (survey$risk3+survey$risk_game_1_cutoff+survey$Q29_numeric)
 
 risk_mod <- lm(risk_score~group+student_status+group*student_status, data=survey)
 summary(risk_mod)
+stargazer(risk_mod)
 t.test(risk_score~student_status, data=survey) #first gen students statistically significantly more risk averse
 boxplot(risk_score~student_status*group, data=survey, col="light blue")
 
