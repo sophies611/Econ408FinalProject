@@ -7,10 +7,16 @@
 # 1a: Set Directory 
 #--------------------
 #setwd("~/Downloads")
+library(tidyverse)
+library(tidyr)
 library(haven) #to import data 
 library(dplyr) #to filter 
 library(ggplot2)
 library(stargazer)
+library(lemon)
+library(knitr)
+library(kableExtra)
+library("ggpubr")
 
 #------------------
 # 1b: Import Data & Clean
@@ -50,7 +56,7 @@ table(survey$Q7, survey$Q8)
 survey <- survey %>% mutate(group=ifelse(Q16=="A lot of Support"|
                                                                   Q16=="Little Support"|
                                                                   Q16=="Moderate Support"|
-                                                                  Q16=="None","Treatment", "Control")) %>% mutate(student_status=ifelse(Q20.1=="Yes","First-gen","Not first_gen"))
+                                                                  Q16=="None","Treatment", "Control")) %>% mutate(student_status=ifelse(Q20.1=="Yes","First-gen","Not First-gen"))
 survey$student_group <- as.factor(paste(survey$group, survey$student_status))
 
 # Create the treatment group (the group of first-gen students who were primed):
@@ -207,18 +213,21 @@ survey$risk_game_1_cutoff <-10-survey$risk_game_1_cutoff
 
 survey %>% group_by(student_status) %>% summarize(mean_risk_game_1_cutoff=mean(risk_game_1_cutoff))
 t.test(risk_game_1_cutoff~student_status, data=survey)
-
+reg1<-lm(risk_game_1_cutoff~group+student_status+(group*student_status),data=survey)
 #----------------------------
 # Part 3b: Risk Pref Game #2
 #----------------------------
 # Create variable for risk:
 
 # Convert character vector to factor
-survey$Q29_numeric <- as.numeric(factor(survey$Q29, levels = as.character(unique(column))))
+survey$Q29_numeric <- as.numeric(factor(survey$Q29, levels = as.character(unique(survey$Q29))))
+reg2<-lm(Q29_numeric~group+student_status+(group*student_status),data=survey)
+
+summary(reg2)
 
 #higher score means more risky
 
-
+t.test(Q29_numeric~student_status, data=survey)
 
 #--------------------
 # Risk Pref Game #3
@@ -236,9 +245,8 @@ table(survey$Q32)
 table(survey$riskgame3)
 
 # Regress group, student status, and interaction term on risk: 
-reg<-lm(riskgame3~group+student_status+(group*student_status),data=survey)
+reg3<-lm(riskgame3~group+student_status+(group*student_status),data=survey)
 summary(reg)
-stargazer(reg)
 
 
 
@@ -257,20 +265,27 @@ survey$risk_score <- (survey$riskgame3+survey$risk_game_1_cutoff+survey$Q29_nume
 
 risk_mod <- lm(risk_score~group+student_status+group*student_status, data=survey)
 summary(risk_mod)
-stargazer(risk_mod)
 t.test(risk_score~student_status, data=survey) #first gen students statistically significantly more risk averse
+
 boxplot(risk_score~student_status*group, data=survey, col="light blue")
 
+stargazer(reg1, reg2, reg3,risk_mod, dep.var.labels= c("Risk Game 1", "Risk Game 2", "Risk Game 3", "Aggregate Risk Score"), covariate.labels= c("Treatment", "Not First-Generation", "Treatment x Not First-Generation", "First-Generation (Constant)"),title="Risk Games Regression", out="risk.htm")
 
 #There is a close statistically significant effect of priming in sentiment score for first-gen students.
 t.test(survey$risk_score[survey$student_status=="First-gen"]~survey$group[survey$student_status=="First-gen"])
 
 #There is no statistically significant effect of priming in sentiment score for non first-gen students.
-t.test(survey$risk_score[survey$student_status=="Not first_gen"]~survey$group[survey$student_status=="Not first_gen"])
+t.test(survey$risk_score[survey$student_status=="Not First-gen"]~survey$group[survey$student_status=="Not First-gen"])
 
+risk_table <- survey %>% group_by(student_group) %>% summarize( mean_risk1=mean(risk_game_1_cutoff), mean_risk2=mean(Q29_numeric), mean_risk3=mean(riskgame3), mean_risk=mean(risk_score)) %>% mutate(across(2:5, round, 3))
+
+risk_table %>%
+  kbl(caption = "Risk Scores by Experimental Group and First-Generation Status", col.names=c("Group", "Risk Game 1", "Risk Game 2", "Risk Game 3", "Aggregate Risk Score")) %>%
+  kable_classic(full_width = F, html_font = "Cambria")
 #----------------------------
-# Part 5: Questionnaire Data
+# Part 5: Sentiment Score
 #----------------------------
+
 
 
 #Reverse scoring and score calculation
@@ -300,14 +315,13 @@ boxplot(sentiment_score~student_status*group, data=survey, col="light blue")
 
 lm1 <- lm(sentiment_score~student_status+group+student_status*group, data=survey)
 summary(lm1)
+stargazer(lm1, out="sentiment.htm")
 
+lm2 <- lm(sentiment_score~risk_score, data=survey)
+summary(lm2)
 
-boxplot(Q23~student_status,data=survey, main="Expected Earnings by First Generation Status",
-        xlab="First Generation Status", ylab="Expected Earnings after Graduation")
-
-boxplot(Q23~Q7,data=survey, main="Expected Earnings by Gender",
-        xlab="Gender", ylab="Expected Earnings after Graduation")
-
+cor(survey$sentiment_score,survey$risk_score, method = "pearson")
+cor(survey$sentiment_score,survey$_score, method = "pearson")
 
 #----------------------------
 # Part 6: Exploratory Analysis
@@ -323,5 +337,15 @@ survey %>% filter(group=="Treatment") %>% ggplot(aes(x=Q13, y=sentiment_score, f
 parent_edu_mod <- lm(sentiment_score~Q13*student_status+Q13+student_status, data=survey)
 summary(parent_edu_mod)
 
+#expected earnings
+boxplot(Q23~student_status,data=survey, main="Expected Earnings by First Generation Status",
+        xlab="First Generation Status", ylab="Expected Earnings after Graduation")
+
+boxplot(Q23~Q7,data=survey, main="Expected Earnings by Gender",
+        xlab="Gender", ylab="Expected Earnings after Graduation")
+
+earnings_mod <- lm(Q23~student_status+group+student_status*group, data=survey)
 
 
+#do ppl think college is harder for first gen students?
+#parental education background
