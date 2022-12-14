@@ -187,6 +187,94 @@ prop.table(table(primed_non_first_gen$Q21.1_8)) # 3% impatient, 97% patient
 prop.table(table(control_non_first_gen$Q21.1_8)) # 2% impatient, 95% patient
                                                 # no sig diff 
 
+#-----------------------
+# Patience Game Vrs 1 
+#-----------------------
+
+for(j in nrow(patience2)){
+  for(i in 2:ncol(patience2)){
+    print(patience2[j,i])
+    if(patience2[j,i]!=patience2[j,i-1]){
+      survey$patience2<-i
+    }
+  }
+}
+
+patience2<-survey%>%
+  mutate(cutoff=ifelse(Q21.1_1!=Q21.1_2,1,
+                       ifelse(Q21.1_2!=Q21.1_3,2,
+                              ifelse(Q21.1_3!=Q21.1_4,3,
+                                     ifelse(Q21.1_4!=Q21.1_5,4,
+                                            ifelse(Q21.1_5!=Q21.1_6,5,
+                                                   ifelse(Q21.1_6!=Q21.1_7,6,
+                                                          ifelse(Q21.1_7!=Q21.1_8,7,8))))))))
+
+survey$patience_cutoff<-patience2$cutoff
+survey$patience_cutoff<-9-survey$patience_cutoff
+
+survey%>%group_by(student_status)%>%summarize(mean_patience_cutoff=mean(patience_cutoff))
+t.test(patience_cutoff~student_status,data=survey)
+
+
+#-----------------------
+# Patience Game Vrs 2 
+#-----------------------
+
+survey$patience<-ifelse(survey$Q21.1_8=="A (1 month)",1,
+                        ifelse(survey$Q21.1_7=="A (1 month)",2,
+                               ifelse(survey$Q21.1_6=="A (1 month)",3,
+                                      ifelse(survey$Q21.1_5=="A (1 month)",4,
+                                             ifelse(survey$Q21.1_4=="A (1 month)",5,
+                                                    ifelse(survey$Q21.1_3=="A (1 month)",6,
+                                                           ifelse(survey$Q21.1_2=="A (1 month)",7,
+                                                                  ifelse(survey$Q21.1_1=="B (7 months)",8,0))))))))
+
+reg2<-lm(patience~group+student_status+(group*student_status),data=survey)
+summary(reg2)
+stargazer(reg2)
+
+
+#----------------------
+# Patience Game Vrs 3
+#----------------------
+
+survey$change2<-ifelse(survey$Q21.1_1==survey$Q21.1_2,0,1)
+survey$change3<-ifelse(survey$Q21.1_2==survey$Q21.1_3,0,1)
+survey$change4<-ifelse(survey$Q21.1_3==survey$Q21.1_4,0,1)
+survey$change5<-ifelse(survey$Q21.1_4==survey$Q21.1_5,0,1)
+survey$change6<-ifelse(survey$Q21.1_5==survey$Q21.1_6,0,1)
+survey$change7<-ifelse(survey$Q21.1_6==survey$Q21.1_7,0,1)
+survey$change8<-ifelse(survey$Q21.1_7==survey$Q21.1_8,0,1)
+
+survey$num_changes<-survey$change2+survey$change3+survey$change4+survey$change5+
+                       survey$change6+survey$change7+survey$change8
+
+table(survey$num_changes)
+
+clean_survey<-filter(survey,num_changes<2)
+
+table(clean_survey$num_changes)
+
+reg3<-lm(change2~group+student_status+(group*student_status),data=clean_survey)
+summary(reg3)
+
+reg4<-lm(change3~group+student_status+(group*student_status),data=clean_survey)
+summary(reg4)
+
+reg5<-lm(change4~group+student_status+(group*student_status),data=clean_survey)
+summary(reg5)
+
+reg6<-lm(change5~group+student_status+(group*student_status),data=clean_survey)
+summary(reg6)
+
+reg7<-lm(change6~group+student_status+(group*student_status),data=clean_survey)
+summary(reg7)
+
+reg8<-lm(change7~group+student_status+(group*student_status),data=clean_survey)
+summary(reg8)
+
+reg9<-lm(change8~group+student_status+(group*student_status),data=clean_survey)
+summary(reg9)
 
 
 #--------------------
@@ -214,6 +302,8 @@ survey$risk_game_1_cutoff <-10-survey$risk_game_1_cutoff
 survey %>% group_by(student_status) %>% summarize(mean_risk_game_1_cutoff=mean(risk_game_1_cutoff))
 t.test(risk_game_1_cutoff~student_status, data=survey)
 reg1<-lm(risk_game_1_cutoff~group+student_status+(group*student_status),data=survey)
+
+
 #----------------------------
 # Part 3b: Risk Pref Game #2
 #----------------------------
@@ -228,6 +318,7 @@ summary(reg2)
 #higher score means more risky
 
 t.test(Q29_numeric~student_status, data=survey)
+
 
 #--------------------
 # Risk Pref Game #3
@@ -282,6 +373,8 @@ risk_table <- survey %>% group_by(student_group) %>% summarize( mean_risk1=mean(
 risk_table %>%
   kbl(caption = "Risk Scores by Experimental Group and First-Generation Status", col.names=c("Group", "Risk Game 1", "Risk Game 2", "Risk Game 3", "Aggregate Risk Score")) %>%
   kable_classic(full_width = F, html_font = "Cambria")
+
+
 #----------------------------
 # Part 5: Sentiment Score
 #----------------------------
