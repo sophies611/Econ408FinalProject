@@ -214,9 +214,11 @@ survey$risk_game_1_cutoff <-10-survey$risk_game_1_cutoff
 survey %>% group_by(student_status) %>% summarize(mean_risk_game_1_cutoff=mean(risk_game_1_cutoff))
 t.test(risk_game_1_cutoff~student_status, data=survey)
 reg1<-lm(risk_game_1_cutoff~group+student_status+(group*student_status),data=survey)
+
 #----------------------------
 # Part 3b: Risk Pref Game #2
 #----------------------------
+
 # Create variable for risk:
 
 # Convert character vector to factor
@@ -248,8 +250,6 @@ table(survey$riskgame3)
 reg3<-lm(riskgame3~group+student_status+(group*student_status),data=survey)
 summary(reg)
 
-
-
 #----------------------------
 # Part 3d: Add up risk preference scores
 #----------------------------
@@ -257,7 +257,6 @@ summary(reg)
 survey$risk_score <- (survey$riskgame3+survey$risk_game_1_cutoff+survey$Q29_numeric)
 
 #a higher score correlates to being more risky
-
 
 #----------------------------
 # Part 4: Regression Analysis
@@ -282,11 +281,10 @@ risk_table <- survey %>% group_by(student_group) %>% summarize( mean_risk1=mean(
 risk_table %>%
   kbl(caption = "Risk Scores by Experimental Group and First-Generation Status", col.names=c("Group", "Risk Game 1", "Risk Game 2", "Risk Game 3", "Aggregate Risk Score")) %>%
   kable_classic(full_width = F, html_font = "Cambria")
+
 #----------------------------
 # Part 5: Sentiment Score
 #----------------------------
-
-
 
 #Reverse scoring and score calculation
 reverse_cols <- c("Q26_1", "Q26_3", "Q26_7")
